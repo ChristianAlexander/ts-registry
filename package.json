@@ -1,6 +1,6 @@
 {
   "name": "ts-registry",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A general-purpose dependency injection container.",
   "main": "./lib/registry.ts",
   "types": "./lib/registry.d.ts",
