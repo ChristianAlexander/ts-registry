@@ -1,0 +1,31 @@
+{
+  "name": "ts-registry",
+  "version": "0.1.0",
+  "description": "A general-purpose dependency injection container.",
+  "main": "./lib/registry.ts",
+  "types": "./lib/registry.d.ts",
+  "scripts": {
+    "lint": "tslint -c tslint.json -e 'node_modules/**/*' '**/*.ts'",
+    "prebuild": "npm run lint && rm -rf lib/*",
+    "build": "tsc",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christianalexander/ts-registry.git"
+  },
+  "keywords": [
+    "typescript",
+    "registry"
+  ],
+  "author": "Christian Alexander",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/christianalexander/ts-registry/issues"
+  },
+  "homepage": "https://github.com/christianalexander/ts-registry#readme",
+  "devDependencies": {
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.4000"
+  }
+}
