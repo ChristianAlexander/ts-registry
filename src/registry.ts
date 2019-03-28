@@ -14,6 +14,8 @@ export class Registry<M> {
   private readonly map = new Map<keyof M, Initializer<M, any>>();
 }
 
-type Initializer<M, K extends keyof M> = (
-  get: <IK extends keyof M>(key: IK) => M[IK]
+export type Initializer<M, K extends keyof M> = (
+  get: InitializerGetter<M, keyof M>
 ) => M[K];
+
+export type InitializerGetter<M, K extends keyof M> = (key: K) => M[K];
