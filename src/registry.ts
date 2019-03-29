@@ -1,17 +1,53 @@
-export class Registry<M> {
-  get<K extends keyof M>(key: K): M[K] {
-    return this.map.get(key)(this.get.bind(this));
-  }
+export class Registry<M> implements IRegistry<M> {
+  get = <K extends keyof M>(key: K, scope?: object): M[K] => {
+    if (
+      this.initializersByScope.has(scope) &&
+      this.initializersByScope.get(scope).has(key)
+    ) {
+      return this.initializersByScope.get(scope).get(key)(this.get);
+    } else if (
+      scope !== this &&
+      this.initializersByScope.has(this) &&
+      this.initializersByScope.get(this).has(key)
+    ) {
+      return this.initializersByScope.get(scope).get(key)(this.get);
+    }
 
-  for<K extends keyof M>(key: K) {
+    throw new Error(`Initializer for ${key} not found`);
+  };
+
+  for = <K extends keyof M>(key: K, scope?: object) => {
+    if (!this.initializersByScope.has(scope || this)) {
+      this.initializersByScope.set(scope || this, new Map());
+    }
+
     return {
       use: (initializer: Initializer<M, K>) => {
-        this.map.set(key, initializer);
+        this.initializersByScope.get(scope).set(key, initializer);
       }
+    };
+  };
+
+  withScope(scope: object): IRegistry<M> {
+    return {
+      get: <K extends keyof M>(key: K) => this.get(key, scope),
+      for: <K extends keyof M>(key: K) => this.for(key, scope)
     };
   }
 
-  private readonly map = new Map<keyof M, Initializer<M, any>>();
+  private readonly initializersByScope = new WeakMap<
+    object,
+    Map<keyof M, Initializer<M, any>>
+  >();
+}
+
+export interface IRegistry<M> {
+  get<K extends keyof M>(key: K): M[K];
+  for<K extends keyof M>(
+    key: K
+  ): {
+    use: (i: Initializer<M, K>) => void;
+  };
 }
 
 export type Initializer<M, K extends keyof M> = (
