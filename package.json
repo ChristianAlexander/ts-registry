@@ -8,7 +8,8 @@
     "lint": "tslint -c tslint.json -e 'node_modules/**/*' '**/*.ts'",
     "prebuild": "npm run lint && rm -rf lib/*",
     "build": "tsc",
-    "prepublish": "npm run build"
+    "prepack": "npm run build",
+    "test": "NODE_ENV=test nyc mocha --require source-map-support/register --require ts-node/register --recursive './src/**/*.tests.ts'"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,16 @@
   },
   "homepage": "https://github.com/christianalexander/ts-registry#readme",
   "devDependencies": {
-    "tslint": "^5.14.0",
-    "typescript": "^3.3.4000"
+    "@types/chai": "^4.2.0",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.7.3",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1",
+    "prettier": "^1.18.2",
+    "source-map-support": "^0.5.13",
+    "ts-node": "^8.3.0",
+    "tslint": "^5.19.0",
+    "typescript": "^3.6.2"
   }
 }
