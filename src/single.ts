@@ -1,7 +1,7 @@
-import { Initializer, InitializerGetter } from "./registry";
+import { Initializer, InitializerGetter } from './registry';
 
 export function single<M, K extends keyof M>(
-  initializer: Initializer<M, K>
+  initializer: Initializer<M, K>,
 ): Initializer<M, K> {
   let cachedValue: M[K];
 

@@ -24,14 +24,14 @@ export class Registry<M> implements IRegistry<M> {
     return {
       use: (initializer: Initializer<M, K>) => {
         this.initializersByScope.get(scope).set(key, initializer);
-      }
+      },
     };
   };
 
   withScope(scope: object): IRegistry<M> {
     return {
       get: <K extends keyof M>(key: K) => this.get(key, scope),
-      for: <K extends keyof M>(key: K) => this.for(key, scope)
+      for: <K extends keyof M>(key: K) => this.for(key, scope),
     };
   }
 
@@ -44,14 +44,14 @@ export class Registry<M> implements IRegistry<M> {
 export interface IRegistry<M> {
   get<K extends keyof M>(key: K): M[K];
   for<K extends keyof M>(
-    key: K
+    key: K,
   ): {
     use: (i: Initializer<M, K>) => void;
   };
 }
 
 export type Initializer<M, K extends keyof M> = (
-  get: InitializerGetter<M, keyof M>
+  get: InitializerGetter<M, keyof M>,
 ) => M[K];
 
 export type InitializerGetter<M, K extends keyof M> = (key: K) => M[K];
