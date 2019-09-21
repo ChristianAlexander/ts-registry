@@ -1,8 +1,8 @@
 {
   "name": "ts-registry",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A general-purpose dependency injection container.",
-  "main": "./lib/index.ts",
+  "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "scripts": {
     "lint": "tslint -c tslint.json -e 'node_modules/**/*' '**/*.ts'",
