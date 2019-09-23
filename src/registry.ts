@@ -71,7 +71,9 @@ export interface IScopedRegistry<M> {
 }
 
 export type Initializer<M, K extends keyof M> = (
-  get: InitializerGetter<M, keyof M>,
+  get: InitializerGetter<M>,
 ) => M[K];
 
-export type InitializerGetter<M, K extends keyof M> = (key: K) => M[K];
+export type InitializerGetter<M, K extends keyof M = keyof M> = (
+  key: K,
+) => M[K];
