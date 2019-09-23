@@ -1,14 +1,18 @@
 export class Registry<M> implements IRegistry<M> {
   get = <K extends keyof M>(key: K, scope?: object): M[K] => {
-    if (!this.instancesByScope.has(scope || this)) {
-      this.instancesByScope.set(scope || this, new Map());
+    const s = scope || this;
+    if (!this.instancesByScope.has(s)) {
+      this.instancesByScope.set(s, new Map());
     }
-    const instances = this.instancesByScope.get(scope || this);
+    const instances = this.instancesByScope.get(s);
 
     if (!instances.has(key)) {
-      const initializers = this.initializersByScope.get(scope || this);
+      const initializers = this.initializersByScope.get(s);
 
       if (!initializers || !initializers.has(key)) {
+        if (s !== this) {
+          return this.get(key, this);
+        }
         throw new Error(`Initializer for '${key}' not found`);
       }
 
@@ -19,13 +23,14 @@ export class Registry<M> implements IRegistry<M> {
   };
 
   for = <K extends keyof M>(key: K, scope?: object) => {
-    if (!this.initializersByScope.has(scope || this)) {
-      this.initializersByScope.set(scope || this, new Map());
+    const s = scope || this;
+    if (!this.initializersByScope.has(s)) {
+      this.initializersByScope.set(s, new Map());
     }
 
     return {
       use: (initializer: Initializer<M, K>) => {
-        this.initializersByScope.get(scope || this).set(key, initializer);
+        this.initializersByScope.get(s).set(key, initializer);
       },
     };
   };
