@@ -16,7 +16,7 @@ export class Registry<M> implements IRegistry<M> {
         throw new Error(`Initializer for '${key}' not found`);
       }
 
-      instances.set(key, initializers.get(key)(this.get.bind(this)));
+      instances.set(key, initializers.get(key)(k => this.get(k, s)));
     }
 
     return instances.get(key);
