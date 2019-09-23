@@ -27,19 +27,6 @@ describe('Registry', () => {
       // ASSERT
       expect(result1).to.equal(result2);
     });
-
-    it('throws if get is called with a scope', () => {
-      // ARRANGE
-      const registry = new Registry<{ service: any }>();
-      const scope = {};
-      registry.for('service').use(() => ({}));
-
-      // ACT
-      const action = () => registry.get('service', scope);
-
-      // ASSERT
-      expect(action).throws(/Initializer for 'service' not found/);
-    });
   });
 
   describe('when an object is passed as a scope', () => {
@@ -102,17 +89,35 @@ describe('Registry', () => {
       expect(action).throws(/Initializer for 'service' not found/);
     });
 
-    it('throws if get is called without a scope', () => {
+    it('returns values from the parent scope when the inner scope does not have the value', () => {
       // ARRANGE
-      const registry = new Registry<{ service: any }>();
+      const registry = new Registry<{ a: string }>();
+      registry.for('a').use(() => 'foo');
       const scope = {};
-      registry.for('service', scope).use(() => ({}));
+      const scopedRegistry = registry.withScope(scope);
 
       // ACT
-      const action = () => registry.get('service');
+      const action = () => scopedRegistry.get('a');
 
       // ASSERT
-      expect(action).throws(/Initializer for 'service' not found/);
+      expect(action).to.not.throw();
+      expect(action()).to.equal('foo');
+    });
+
+    it('returns values from the inner scope when both the outer and the inner scopes have initializers', () => {
+      // ARRANGE
+      const registry = new Registry<{ a: string }>();
+      registry.for('a').use(() => '123');
+      const scope = {};
+      const scopedRegistry = registry.withScope(scope);
+      scopedRegistry.for('a').use(() => '321');
+
+      // ACT
+      const action = () => scopedRegistry.get('a');
+
+      // ASSERT
+      expect(action).to.not.throw();
+      expect(action()).to.equal('321');
     });
   });
 });
