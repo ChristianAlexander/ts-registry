@@ -119,5 +119,22 @@ describe('Registry', () => {
       expect(action).to.not.throw();
       expect(action()).to.equal('321');
     });
+
+    it('injects scoped gets to scoped fors', () => {
+      // ARRANGE
+      const registry = new Registry<{ a: string; b: string }>();
+      registry.for('a').use(() => '123');
+      const scope = {};
+      const scopedRegistry = registry.withScope(scope);
+      scopedRegistry.for('a').use(() => '321');
+      scopedRegistry.for('b').use(get => get('a'));
+
+      // ACT
+      const action = () => scopedRegistry.get('b');
+
+      // ASSERT
+      expect(action).to.not.throw();
+      expect(action()).to.equal('321');
+    });
   });
 });
