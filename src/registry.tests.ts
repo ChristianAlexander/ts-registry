@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { Registry } from '.';
+import { ScopeProvider, singleton, unique } from './registry';
 
 describe('Registry', () => {
   describe('when no scope is defined', () => {
@@ -14,7 +15,7 @@ describe('Registry', () => {
       expect(action).throws(/Initializer for 'service' not found/);
     });
 
-    it('returns the same instance each time get is called without a scope', () => {
+    it('returns a new instance each time get is called', () => {
       // ARRANGE
       const registry = new Registry<{ service: any }>();
 
@@ -25,116 +26,166 @@ describe('Registry', () => {
       const result2 = registry.get('service');
 
       // ASSERT
+      expect(result1).to.not.equal(result2);
+    });
+  });
+
+  describe('when a "unique" scope is defined', () => {
+    it('returns a new instance each time get is called', () => {
+      // ARRANGE
+      const registry = new Registry<{ service: any }>();
+
+      registry
+        .for('service')
+        .withScope(unique)
+        .use(() => ({}));
+
+      // ACT
+      const result1 = registry.get('service');
+      const result2 = registry.get('service');
+
+      // ASSERT
+      expect(result1).to.not.equal(result2);
+    });
+  });
+
+  describe('when a "singleton" scope is defined', () => {
+    it('returns the same instance each time get is called', () => {
+      // ARRANGE
+      const registry = new Registry<{ service: any }>();
+
+      registry
+        .for('service')
+        .withScope(singleton)
+        .use(() => ({}));
+
+      // ACT
+      const result1 = registry.get('service');
+      const result2 = registry.get('service');
+
+      // ASSERT
       expect(result1).to.equal(result2);
     });
   });
 
-  describe('when an object is passed as a scope', () => {
-    it('throws when an initializer is not defined for the given key', () => {
+  describe('when muiltiple service are defined', () => {
+    it('individual scopes are respected', () => {
       // ARRANGE
-      const registry = new Registry<{ service: any }>();
-      const scope = {};
+      const registry = new Registry<{
+        a: number;
+        b: { local: string; dep: string };
+      }>();
+
+      registry
+        .for('a')
+        .withScope(singleton)
+        .use(() => Math.random());
+
+      registry
+        .for('b')
+        .withScope(unique)
+        .use(get => ({ local: '' + Math.random(), dep: '' + get('a') }));
 
       // ACT
-      const action = () => registry.get('service', scope);
+      const result1 = registry.get('b');
+      const result2 = registry.get('b');
 
       // ASSERT
-      expect(action).throws(/Initializer for 'service' not found/);
+      expect(result1.dep).to.equal(result2.dep);
+      expect(result1.local).to.not.equal(result2.local);
     });
+  });
 
-    it('returns the same instance each time get is called with the same scope', () => {
+  describe('invalid scope providers', () => {
+    it('falls back to "unique" if getTargetScope is not a function', () => {
       // ARRANGE
-      const registry = new Registry<{ service: any }>();
-      const scope = {};
+      const scopeProvider: ScopeProvider<undefined> = {
+        getTargetScope: 'not a function' as any,
+        sourceScopeGetters: [],
+      };
 
-      registry.for('service', scope).use(() => ({}));
-      registry.for('service', scope).use(() => ({}));
+      const registry = new Registry<{ number: number }>();
 
       // ACT
-      const result1 = registry.get('service', scope);
-      const result2 = registry.get('service', scope);
+      registry
+        .for('number')
+        .withScope(scopeProvider)
+        .use(() => Math.random());
 
-      // ASSERT
-      expect(result1).to.equal(result2);
-    });
-
-    it('returns a different instance when get is called with different scopes', () => {
-      // ARRANGE
-      const registry = new Registry<{ service: any }>();
-      const scope1 = {};
-      const scope2 = {};
-
-      registry.for('service', scope1).use(() => ({}));
-      registry.for('service', scope2).use(() => ({}));
-
-      // ACT
-      const result1 = registry.get('service', scope1);
-      const result2 = registry.get('service', scope2);
+      const result1 = registry.get('number');
+      const result2 = registry.get('number');
 
       // ASSERT
       expect(result1).to.not.equal(result2);
     });
 
-    it('throws if get is called with a different scope', () => {
+    it('falls back to "unique" for a source scope getter that is not a function', () => {
       // ARRANGE
-      const registry = new Registry<{ service: any }>();
-      const scope1 = {};
-      const scope2 = {};
-      registry.for('service', scope1).use(() => ({}));
+      const scope = {};
+      const scopeProvider: ScopeProvider<{}> = {
+        getTargetScope: () => scope,
+        sourceScopeGetters: [undefined],
+      };
+
+      const registry = new Registry<{ number: number }>();
 
       // ACT
-      const action = () => registry.get('service', scope2);
+      registry
+        .for('number')
+        .withScope(scopeProvider)
+        .use(() => Math.random());
+
+      const result1 = registry.get('number');
+      const result2 = registry.get('number');
 
       // ASSERT
-      expect(action).throws(/Initializer for 'service' not found/);
+      expect(result1).to.not.equal(result2);
     });
 
-    it('returns values from the parent scope when the inner scope does not have the value', () => {
+    it('falls back to "unique" if sourceScopeGetters is not an array', () => {
       // ARRANGE
-      const registry = new Registry<{ a: string }>();
-      registry.for('a').use(() => 'foo');
       const scope = {};
-      const scopedRegistry = registry.withScope(scope);
+      const scopeProvider: ScopeProvider<{}> = {
+        getTargetScope: () => scope,
+        sourceScopeGetters: 'not an array' as any,
+      };
+
+      const registry = new Registry<{ number: number }>();
 
       // ACT
-      const action = () => scopedRegistry.get('a');
+      registry
+        .for('number')
+        .withScope(scopeProvider)
+        .use(() => Math.random());
+
+      const result1 = registry.get('number');
+      const result2 = registry.get('number');
 
       // ASSERT
-      expect(action).to.not.throw();
-      expect(action()).to.equal('foo');
+      expect(result1).to.not.equal(result2);
     });
 
-    it('returns values from the inner scope when both the outer and the inner scopes have initializers', () => {
+    it('falls back to "unique" if a source scope getter returns a falsy scope', () => {
       // ARRANGE
-      const registry = new Registry<{ a: string }>();
-      registry.for('a').use(() => '123');
       const scope = {};
-      const scopedRegistry = registry.withScope(scope);
-      scopedRegistry.for('a').use(() => '321');
+      const scopeProvider: ScopeProvider<{}> = {
+        getTargetScope: () => scope,
+        sourceScopeGetters: [() => undefined],
+      };
+
+      const registry = new Registry<{ number: number }>();
 
       // ACT
-      const action = () => scopedRegistry.get('a');
+      registry
+        .for('number')
+        .withScope(scopeProvider)
+        .use(() => Math.random());
+
+      const result1 = registry.get('number');
+      const result2 = registry.get('number');
 
       // ASSERT
-      expect(action).to.not.throw();
-      expect(action()).to.equal('321');
-    });
-
-    it('injects scoped gets to scoped fors', () => {
-      // ARRANGE
-      const registry = new Registry<{ a: string; b: string }>();
-      registry.for('a').use(() => '123');
-      const scope = {};
-      const scopedRegistry = registry.withScope(scope);
-      scopedRegistry.for('a').use(() => '321');
-      scopedRegistry.for('b').use(get => get('a'));
-
-      // ACT
-      const action = () => scopedRegistry.get('b');
-
-      // ASSERT
-      expect(action).to.not.throw();
-      expect(action()).to.equal('321');
+      expect(result1).to.not.equal(result2);
     });
   });
 });

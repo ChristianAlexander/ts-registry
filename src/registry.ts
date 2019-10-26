@@ -1,71 +1,76 @@
 export class Registry<M> implements IRegistry<M> {
-  get = <K extends keyof M>(key: K, scope?: object): M[K] => {
-    const s = scope || this;
-    if (!this.instancesByScope.has(s)) {
-      this.instancesByScope.set(s, new Map());
+  get = <K extends keyof M>(key: K): M[K] => {
+    if (!this.initializers.has(key)) {
+      throw new Error(`Initializer for '${key}' not found`);
     }
-    const instances = this.instancesByScope.get(s);
 
-    if (!instances.has(key)) {
-      const initializers = this.initializersByScope.get(s);
+    const { initializer, scopeProvider } = this.initializers.get(key);
 
-      if (!initializers || !initializers.has(key)) {
-        if (s !== this) {
-          return this.get(key, this);
-        }
-        throw new Error(`Initializer for '${key}' not found`);
+    for (let i = 0; i < scopeProvider.sourceScopeGetters.length; i++) {
+      const getSourceScope = scopeProvider.sourceScopeGetters[i];
+
+      if (typeof getSourceScope !== 'function') continue;
+      const sourceScope = getSourceScope();
+
+      if (!sourceScope) continue;
+      if (!this.instancesByScope.has(sourceScope)) continue;
+      if (!this.instancesByScope.get(sourceScope).has(key)) continue;
+
+      return this.instancesByScope.get(sourceScope).get(key);
+    }
+
+    const targetScope =
+      typeof scopeProvider.getTargetScope === 'function' &&
+      scopeProvider.getTargetScope();
+
+    const instance = initializer(this.get.bind(this), targetScope);
+    if (targetScope) {
+      if (!this.instancesByScope.has(targetScope)) {
+        this.instancesByScope.set(targetScope, new Map());
       }
 
-      instances.set(key, initializers.get(key)(k => this.get(k, s)));
+      this.instancesByScope.get(targetScope).set(key, instance);
     }
 
-    return instances.get(key);
+    return instance;
   };
 
-  for = <K extends keyof M>(key: K, scope?: object) => {
-    const s = scope || this;
-    if (!this.initializersByScope.has(s)) {
-      this.initializersByScope.set(s, new Map());
-    }
-
+  for = <K extends keyof M>(key: K) => {
     return {
+      withScope: <TScope extends object>(
+        scopeProvider: ScopeProvider<TScope>,
+      ) => ({
+        use: (initializer: ScopedInitializer<M, K, TScope>) => {
+          this.initializers.set(key, { initializer, scopeProvider });
+        },
+      }),
       use: (initializer: Initializer<M, K>) => {
-        this.initializersByScope.get(s).set(key, initializer);
+        this.initializers.set(key, { initializer, scopeProvider: unique });
       },
     };
   };
 
-  withScope(scope: object): IScopedRegistry<M> {
-    return {
-      get: <K extends keyof M>(key: K) => this.get(key, scope),
-      for: <K extends keyof M>(key: K) => this.for(key, scope),
-    };
-  }
-
-  private readonly initializersByScope = new WeakMap<
-    object,
-    Map<keyof M, Initializer<M, any>>
+  private readonly initializers = new Map<
+    keyof M,
+    {
+      initializer: ScopedInitializer<M, any, any>;
+      scopeProvider: ScopeProvider<any>;
+    }
   >();
 
   private readonly instancesByScope = new WeakMap<object, Map<keyof M, any>>();
 }
 
 export interface IRegistry<M> {
-  get<K extends keyof M>(key: K, scope?: object): M[K];
-  for<K extends keyof M>(
-    key: K,
-    scope?: object,
-  ): {
-    use: (i: Initializer<M, K>) => void;
-  };
-  withScope(scope: object): IScopedRegistry<M>;
-}
-
-export interface IScopedRegistry<M> {
   get<K extends keyof M>(key: K): M[K];
   for<K extends keyof M>(
     key: K,
   ): {
+    withScope<TScope extends object>(
+      scopeProvider: ScopeProvider<TScope>,
+    ): {
+      use: (i: ScopedInitializer<M, K, TScope>) => void;
+    };
     use: (i: Initializer<M, K>) => void;
   };
 }
@@ -74,6 +79,29 @@ export type Initializer<M, K extends keyof M> = (
   get: InitializerGetter<M>,
 ) => M[K];
 
+export type ScopedInitializer<M, K extends keyof M, TScope extends object> = (
+  get: InitializerGetter<M>,
+  scope: TScope,
+) => M[K];
+
 export type InitializerGetter<M, K extends keyof M = keyof M> = (
   key: K,
 ) => M[K];
+
+export interface ScopeProvider<TScope extends object> {
+  /** Gets the scope where the instance will be stored after initialization */
+  getTargetScope(): TScope;
+  /** Array of getters for scopes where an existing instance will be found */
+  sourceScopeGetters: (() => object)[];
+}
+
+const singletonScope = {};
+export const singleton: ScopeProvider<{}> = {
+  getTargetScope: () => singletonScope,
+  sourceScopeGetters: [() => singletonScope],
+};
+
+export const unique: ScopeProvider<undefined> = {
+  getTargetScope: () => undefined,
+  sourceScopeGetters: [],
+};
