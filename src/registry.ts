@@ -84,9 +84,7 @@ export type ScopedInitializer<M, K extends keyof M, TScope extends object> = (
   scope: TScope,
 ) => M[K];
 
-export type InitializerGetter<M, K extends keyof M = keyof M> = (
-  key: K,
-) => M[K];
+export type InitializerGetter<M> = <K extends keyof M>(key: K) => M[K]
 
 export interface ScopeProvider<TScope extends object> {
   /** Gets the scope where the instance will be stored after initialization */
