@@ -189,3 +189,58 @@ describe('Registry', () => {
     });
   });
 });
+
+describe('strict typing', () => {
+  it('provides the correct typing in a non-scoped initializer', () => {
+    const registry = new Registry<TypeMap>();
+
+    registry
+      .for('gizmoService')
+      .use(get => new GizmoService(get('widgetService')));
+  });
+
+  it('provides the correct typing in a scoped initializer', () => {
+    const registry = new Registry<TypeMap>();
+
+    registry
+      .for('gizmoService')
+      .withScope(singleton)
+      .use(get => new GizmoService(get('widgetService')));
+  });
+
+  // Type definitions
+  type TypeMap = {
+    gizmoService: IGizmoService;
+    widgetService: IWidgetService;
+  };
+
+  type Widget = {
+    widgetId: string;
+  };
+
+  interface IWidgetService {
+    getWidgets(): Widget[];
+  }
+
+  type Gizmo = {
+    gizmoId: string;
+  };
+
+  interface IGizmoService {
+    getGizmos(): Gizmo[];
+  }
+
+  class WidgetService implements IWidgetService {
+    getWidgets(): Widget[] {
+      throw new Error('Method not implemented.');
+    }
+  }
+
+  class GizmoService implements IGizmoService {
+    constructor(private readonly widgetService: IWidgetService) {}
+
+    getGizmos(): Gizmo[] {
+      throw new Error('Method not implemented.');
+    }
+  }
+});

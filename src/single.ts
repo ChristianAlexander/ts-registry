@@ -5,7 +5,7 @@ export function single<M, K extends keyof M>(
 ): Initializer<M, K> {
   let cachedValue: M[K];
 
-  return (get: InitializerGetter<M, keyof M>): M[K] => {
+  return (get: InitializerGetter<M>): M[K] => {
     if (!cachedValue) {
       cachedValue = initializer(get);
     }
