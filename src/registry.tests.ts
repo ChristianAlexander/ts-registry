@@ -124,7 +124,7 @@ describe('Registry', () => {
       const scope = {};
       const scopeProvider: ScopeProvider<{}> = {
         getTargetScope: () => scope,
-        sourceScopeGetters: [undefined],
+        sourceScopeGetters: [undefined as any],
       };
 
       const registry = new Registry<{ number: number }>();
@@ -170,7 +170,7 @@ describe('Registry', () => {
       const scope = {};
       const scopeProvider: ScopeProvider<{}> = {
         getTargetScope: () => scope,
-        sourceScopeGetters: [() => undefined],
+        sourceScopeGetters: [() => undefined as any],
       };
 
       const registry = new Registry<{ number: number }>();

@@ -37,7 +37,7 @@ export class Registry<M> implements IRegistry<M> {
 
   for = <K extends keyof M>(key: K) => {
     return {
-      withScope: <TScope extends object>(
+      withScope: <TScope extends Scope>(
         scopeProvider: ScopeProvider<TScope>,
       ) => ({
         use: (initializer: ScopedInitializer<M, K, TScope>) => {
@@ -61,12 +61,14 @@ export class Registry<M> implements IRegistry<M> {
   private readonly instancesByScope = new WeakMap<object, Map<keyof M, any>>();
 }
 
+export type Scope = object | undefined
+
 export interface IRegistry<M> {
   get<K extends keyof M>(key: K): M[K];
   for<K extends keyof M>(
     key: K,
   ): {
-    withScope<TScope extends object>(
+    withScope<TScope extends Scope>(
       scopeProvider: ScopeProvider<TScope>,
     ): {
       use: (i: ScopedInitializer<M, K, TScope>) => void;
@@ -79,14 +81,14 @@ export type Initializer<M, K extends keyof M> = (
   get: InitializerGetter<M>,
 ) => M[K];
 
-export type ScopedInitializer<M, K extends keyof M, TScope extends object> = (
+export type ScopedInitializer<M, K extends keyof M, TScope extends Scope> = (
   get: InitializerGetter<M>,
   scope: TScope,
 ) => M[K];
 
 export type InitializerGetter<M> = <K extends keyof M>(key: K) => M[K]
 
-export interface ScopeProvider<TScope extends object> {
+export interface ScopeProvider<TScope extends Scope> {
   /** Gets the scope where the instance will be stored after initialization */
   getTargetScope(): TScope;
   /** Array of getters for scopes where an existing instance will be found */
