@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/christianalexander/ts-registry.git"
+    "url": "git+https://github.com/ChristianAlexander/ts-registry.git"
   },
   "keywords": [
     "typescript",
@@ -22,14 +22,14 @@
   "author": "Christian Alexander",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/christianalexander/ts-registry/issues"
+    "url": "https://github.com/ChristianAlexander/ts-registry/issues"
   },
   "mocha": {
     "node-option": [
       "import=tsx"
     ]
   },
-  "homepage": "https://github.com/christianalexander/ts-registry#readme",
+  "homepage": "https://github.com/ChristianAlexander/ts-registry#readme",
   "devDependencies": {
     "@types/chai": "^4.2.0",
     "@types/mocha": "^5.2.7",
