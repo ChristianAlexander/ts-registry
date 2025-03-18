@@ -1,7 +1,7 @@
 export class Registry<M> implements IRegistry<M> {
   get = <K extends keyof M>(key: K): M[K] => {
     if (!this.initializers.has(key)) {
-      throw new Error(`Initializer for '${key}' not found`);
+      throw new Error(`Initializer for '${key.toString()}' not found`);
     }
 
     const { initializer, scopeProvider } = this.initializers.get(key);
