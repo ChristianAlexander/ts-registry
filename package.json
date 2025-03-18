@@ -9,7 +9,7 @@
     "prebuild": "npm run lint && rm -rf lib/*",
     "build": "tsc",
     "prepack": "npm run build",
-    "test": "NODE_ENV=test nyc mocha --require source-map-support/register --require ts-node/register --recursive './src/**/*.tests.ts'"
+    "test": "NODE_ENV=test nyc mocha --require source-map-support/register --recursive './src/**/*.tests.ts'"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,11 @@
   "bugs": {
     "url": "https://github.com/christianalexander/ts-registry/issues"
   },
+  "mocha": {
+    "node-option": [
+      "import=tsx"
+    ]
+  },
   "homepage": "https://github.com/christianalexander/ts-registry#readme",
   "devDependencies": {
     "@types/chai": "^4.2.0",
@@ -34,8 +39,8 @@
     "nyc": "^17.1.0",
     "prettier": "^3.5.3",
     "source-map-support": "^0.5.13",
-    "ts-node": "^10.9.2",
     "tslint": "^5.19.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }
 }
