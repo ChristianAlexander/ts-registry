@@ -95,8 +95,8 @@ export interface ScopeProvider<TScope extends Scope> {
   sourceScopeGetters: (() => object)[];
 }
 
-const singletonScope = {};
-export const singleton: ScopeProvider<{}> = {
+const singletonScope = Object.freeze({});
+export const singleton: ScopeProvider<typeof singletonScope> = {
   getTargetScope: () => singletonScope,
   sourceScopeGetters: [() => singletonScope],
 };
